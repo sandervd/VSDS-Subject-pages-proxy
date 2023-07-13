@@ -1,0 +1,48 @@
+<html>
+    <head>
+    <style>
+        body {
+            color: #333332;
+            width: 1200px;
+            margin: 0px auto;
+        }
+        a {
+            color: #05c;
+        }
+    </style>
+    </head>
+    <body>
+        <h2><a href="/?uri={{subject_uri}}">{{subject_uri}}</a></h2>
+        <ul>
+        {% for triple in graph.triples((subject_uri,None,None)) recursive %}
+            <ul>
+            {# triple 0: subject, 1: predicate, 2: object #}
+            {% set subject = triple[0] %}
+            {% set predicate = triple[1] %}
+            {% set object = triple[2] %}
+            {# If we know the label(s) of the predicate, use those in link #}
+            {% if graph.predicate_objects(predicate) is has_contents %}
+                <li>
+                {% for predicate_statements in graph.triples((predicate,None,None)) %}
+                    {% set label = predicate_statements[2] %}
+                    <b><a href="{{predicate}}">{{label}}</a></b>
+                {% endfor %}
+                </li>
+            {# Predicate not present in known ontologies #}
+            {% else %}
+                <li><b><a href="{{predicate}}">{{predicate}}</a></b></li>
+            {% endif %}
+            
+            {% if object is literal %}
+                {{ object }}
+            {# if object is blank node, and we know more about it: recurse #}
+            {% elif graph.predicate_objects(object) is has_contents %}
+                {{ loop(graph.triples((object,None,None))) }}
+            {% else %}
+                <a href="/?uri={{object}}">{{ object }}</a>
+            {% endif %}
+            </ul>
+        {% endfor %}
+        </ul>
+    </body>
+</html>
